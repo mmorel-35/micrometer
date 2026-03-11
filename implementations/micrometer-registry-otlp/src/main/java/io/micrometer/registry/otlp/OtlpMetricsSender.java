@@ -42,6 +42,19 @@ public interface OtlpMetricsSender {
     void send(Request request) throws Exception;
 
     /**
+     * Returns the value to use for the {@code User-Agent} header when sending metrics.
+     * @return User-Agent header value
+     */
+    static String getUserAgentHeader() {
+        String userAgent = "Micrometer-OTLP-Exporter-Java";
+        String version = OtlpMetricsSender.class.getPackage().getImplementationVersion();
+        if (version != null) {
+            userAgent += "/" + version;
+        }
+        return userAgent;
+    }
+
+    /**
      * Immutable representation of a payload of metrics to use with an
      * {@link OtlpMetricsSender}.
      */
