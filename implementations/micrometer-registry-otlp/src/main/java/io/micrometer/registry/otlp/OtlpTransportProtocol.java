@@ -39,8 +39,10 @@ public enum OtlpTransportProtocol {
     /**
      * Converts an OpenTelemetry protocol string value to an
      * {@link OtlpTransportProtocol}. Accepts {@code "grpc"} and {@code "http/protobuf"}
-     * (case-insensitive).
-     * @param value the protocol string from an OpenTelemetry environment variable
+     * (case-insensitive). The underscore alias {@code "http_protobuf"} is also accepted
+     * as a property value.
+     * @param value the protocol string from an OpenTelemetry environment variable or
+     * configuration property
      * @return the matching protocol
      * @throws IllegalArgumentException if the value is not recognized
      */
@@ -51,8 +53,8 @@ public enum OtlpTransportProtocol {
         if ("http/protobuf".equalsIgnoreCase(value) || "http_protobuf".equalsIgnoreCase(value)) {
             return HTTP_PROTOBUF;
         }
-        throw new IllegalArgumentException(
-                "Unknown OTLP transport protocol: '" + value + "'. Accepted values: 'grpc', 'http/protobuf'");
+        throw new IllegalArgumentException("Unknown OTLP transport protocol: '" + value
+                + "'. Accepted values: 'grpc', 'http/protobuf' (or 'http_protobuf' as a property value)");
     }
 
 }

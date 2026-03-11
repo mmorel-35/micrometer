@@ -48,6 +48,8 @@ import static org.assertj.core.api.Assertions.assertThatException;
  */
 class OtlpGrpcMetricsSenderTests {
 
+    private static final byte[] EMPTY_REQUEST_BYTES = ExportMetricsServiceRequest.getDefaultInstance().toByteArray();
+
     private static final Metadata.Key<String> TEST_HEADER_KEY = Metadata.Key.of("test-header",
             Metadata.ASCII_STRING_MARSHALLER);
 
@@ -88,7 +90,7 @@ class OtlpGrpcMetricsSenderTests {
     @Test
     void shouldSendMetrics() throws Exception {
         OtlpGrpcMetricsSender sender = new OtlpGrpcMetricsSender(this.channel);
-        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(new byte[0]).build();
+        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(EMPTY_REQUEST_BYTES).build();
 
         sender.send(request);
 
@@ -98,7 +100,7 @@ class OtlpGrpcMetricsSenderTests {
     @Test
     void shouldTransmitHeaders() throws Exception {
         OtlpGrpcMetricsSender sender = new OtlpGrpcMetricsSender(this.channel);
-        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(new byte[0])
+        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(EMPTY_REQUEST_BYTES)
             .headers(Map.of("test-header", "test-value"))
             .build();
 
@@ -111,7 +113,7 @@ class OtlpGrpcMetricsSenderTests {
     @Test
     void shouldSendWithGzipCompression() throws Exception {
         OtlpGrpcMetricsSender sender = new OtlpGrpcMetricsSender(this.channel);
-        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(new byte[0])
+        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(EMPTY_REQUEST_BYTES)
             .compressionMode(CompressionMode.GZIP)
             .build();
 
@@ -125,7 +127,7 @@ class OtlpGrpcMetricsSenderTests {
     void shouldPropagateGrpcErrors() {
         this.testService.failWith = Status.UNAVAILABLE.asRuntimeException();
         OtlpGrpcMetricsSender sender = new OtlpGrpcMetricsSender(this.channel);
-        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(new byte[0]).build();
+        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(EMPTY_REQUEST_BYTES).build();
 
         assertThatException().isThrownBy(() -> sender.send(request)).isInstanceOf(StatusRuntimeException.class);
     }
