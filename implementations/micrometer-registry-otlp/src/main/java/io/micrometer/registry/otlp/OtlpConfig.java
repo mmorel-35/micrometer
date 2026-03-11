@@ -53,8 +53,14 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@code OTEL_EXPORTER_OTLP_METRICS_ENDPOINT} and {@code OTEL_EXPORTER_OTLP_ENDPOINT}
      * environment variables will be checked, in that order, by the default
      * implementation.
+     * <p>
+     * When no endpoint is configured and the protocol is
+     * {@link OtlpTransportProtocol#GRPC} (set via
+     * {@code OTEL_EXPORTER_OTLP_METRICS_PROTOCOL} or
+     * {@code OTEL_EXPORTER_OTLP_PROTOCOL}), the default is {@code http://localhost:4317}.
      * @return address to where metrics will be published. Default is
-     * {@code http://localhost:4318/v1/metrics}
+     * {@code http://localhost:4318/v1/metrics} for HTTP or {@code http://localhost:4317}
+     * for gRPC
      * @see <a href=
      * "https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/">OTLP
      * Exporter Configuration</a>
@@ -67,12 +73,41 @@ public interface OtlpConfig extends PushRegistryConfig {
                 endpoint = env.get("OTEL_EXPORTER_OTLP_ENDPOINT");
             }
             if (endpoint == null) {
-                endpoint = "http://localhost:4318/v1/metrics";
+                return protocol() == OtlpTransportProtocol.GRPC ? "http://localhost:4317"
+                        : "http://localhost:4318/v1/metrics";
             }
-            else if (!endpoint.endsWith("/v1/metrics")) {
+            if (protocol() == OtlpTransportProtocol.HTTP_PROTOBUF && !endpoint.endsWith("/v1/metrics")) {
                 endpoint = endpoint + "/v1/metrics";
             }
             return endpoint;
+        });
+    }
+
+    /**
+     * The transport protocol to use for OTLP export. Reads
+     * {@code OTEL_EXPORTER_OTLP_METRICS_PROTOCOL} first (signal-specific), then
+     * {@code OTEL_EXPORTER_OTLP_PROTOCOL} (global fallback), defaulting to
+     * {@link OtlpTransportProtocol#HTTP_PROTOBUF}.
+     * <p>
+     * Accepted values per the OpenTelemetry specification: {@code grpc} or
+     * {@code http/protobuf} (case-insensitive).
+     * @return the transport protocol; default is
+     * {@link OtlpTransportProtocol#HTTP_PROTOBUF}
+     * @since 1.15.0
+     * @see <a href= "https://opentelemetry.io/docs/specs/otel/protocol/exporter/">OTLP
+     * Exporter Configuration</a>
+     */
+    default OtlpTransportProtocol protocol() {
+        return getEnum(this, OtlpTransportProtocol.class, "protocol").orElseGet(() -> {
+            Map<String, String> env = System.getenv();
+            String protocol = env.get("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL");
+            if (protocol == null) {
+                protocol = env.get("OTEL_EXPORTER_OTLP_PROTOCOL");
+            }
+            if (protocol != null) {
+                return OtlpTransportProtocol.fromString(protocol);
+            }
+            return OtlpTransportProtocol.HTTP_PROTOBUF;
         });
     }
 
