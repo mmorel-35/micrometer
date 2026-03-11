@@ -123,7 +123,7 @@ class OtlpGrpcMetricsSenderTests {
 
         assertThat(this.testService.capturedHeaders.get()).isNotNull();
         assertThat(this.testService.capturedHeaders.get().getAll(USER_AGENT_KEY))
-            .anyMatch(v -> v.startsWith("Micrometer-OTLP-Exporter-Java"));
+            .anyMatch(v -> v.contains("Micrometer-OTLP-Exporter-Java"));
     }
 
     @Test

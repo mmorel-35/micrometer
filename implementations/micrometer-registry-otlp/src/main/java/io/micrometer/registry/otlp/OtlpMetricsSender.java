@@ -34,6 +34,13 @@ import java.util.Objects;
 public interface OtlpMetricsSender {
 
     /**
+     * Cached User-Agent header value, computed once from the package manifest version.
+     */
+    String USER_AGENT_HEADER = "Micrometer-OTLP-Exporter-Java"
+            + (OtlpMetricsSender.class.getPackage().getImplementationVersion() != null
+                    ? "/" + OtlpMetricsSender.class.getPackage().getImplementationVersion() : "");
+
+    /**
      * Send a batch of OTLP Protobuf format metrics to an OTLP receiver.
      * @param request metrics request to publish
      * @throws Exception when there is an exception in sending the metrics; the caller
@@ -46,12 +53,7 @@ public interface OtlpMetricsSender {
      * @return User-Agent header value
      */
     static String getUserAgentHeader() {
-        String userAgent = "Micrometer-OTLP-Exporter-Java";
-        String version = OtlpMetricsSender.class.getPackage().getImplementationVersion();
-        if (version != null) {
-            userAgent += "/" + version;
-        }
-        return userAgent;
+        return USER_AGENT_HEADER;
     }
 
     /**
