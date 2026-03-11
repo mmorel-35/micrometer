@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link OtlpGrpcMetricsSender}.
@@ -130,6 +131,17 @@ class OtlpGrpcMetricsSenderTests {
         OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(EMPTY_REQUEST_BYTES).build();
 
         assertThatException().isThrownBy(() -> sender.send(request)).isInstanceOf(StatusRuntimeException.class);
+    }
+
+    @Test
+    void shouldRejectBinSuffixHeaderKeys() {
+        OtlpGrpcMetricsSender sender = new OtlpGrpcMetricsSender(this.channel);
+        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(EMPTY_REQUEST_BYTES)
+            .headers(Map.of("custom-bin", "value"))
+            .build();
+
+        assertThatThrownBy(() -> sender.send(request)).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("custom-bin");
     }
 
     private static class TestMetricsService extends MetricsServiceGrpc.MetricsServiceImplBase {

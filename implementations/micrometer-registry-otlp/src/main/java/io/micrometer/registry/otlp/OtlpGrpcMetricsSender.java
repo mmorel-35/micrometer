@@ -58,9 +58,15 @@ public class OtlpGrpcMetricsSender implements OtlpMetricsSender {
     @Override
     public void send(Request request) throws Exception {
         Metadata headers = new Metadata();
-        request.getHeaders()
-            .forEach((key, value) -> headers
-                .put(Metadata.Key.of(key.toLowerCase(Locale.ROOT), Metadata.ASCII_STRING_MARSHALLER), value));
+        request.getHeaders().forEach((key, value) -> {
+            String normalizedKey = key.toLowerCase(Locale.ROOT);
+            if (normalizedKey.endsWith("-bin")) {
+                throw new IllegalArgumentException("Header key '" + key
+                        + "' ends with '-bin', which requires a binary marshaller and is not supported. "
+                        + "Remove or rename this header.");
+            }
+            headers.put(Metadata.Key.of(normalizedKey, Metadata.ASCII_STRING_MARSHALLER), value);
+        });
 
         MetricsServiceGrpc.MetricsServiceBlockingStub stub = this.baseStub
             .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers));

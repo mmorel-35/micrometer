@@ -389,6 +389,15 @@ class OtlpConfigTest {
     }
 
     @Test
+    void invalidProtocolShouldBeCaptured() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.protocol", "some_random_thing");
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isFalse();
+    }
+
+    @Test
     void protocolDefault() {
         OtlpConfig config = k -> null;
         assertThat(config.protocol()).isSameAs(OtlpTransportProtocol.HTTP_PROTOBUF);

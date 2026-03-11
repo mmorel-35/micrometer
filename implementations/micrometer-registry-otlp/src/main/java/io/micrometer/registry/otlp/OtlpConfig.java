@@ -17,7 +17,9 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
 import java.net.URLDecoder;
@@ -100,7 +102,13 @@ public interface OtlpConfig extends PushRegistryConfig {
     default OtlpTransportProtocol protocol() {
         String propertyValue = getString(this, "protocol").orElse(null);
         if (propertyValue != null) {
-            return OtlpTransportProtocol.fromString(propertyValue);
+            try {
+                return OtlpTransportProtocol.fromString(propertyValue);
+            }
+            catch (IllegalArgumentException e) {
+                throw new ValidationException(Validated.invalid(prefix() + ".protocol", propertyValue, e.getMessage(),
+                        InvalidReason.MALFORMED, e));
+            }
         }
         Map<String, String> env = System.getenv();
         String protocol = env.get("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL");
@@ -376,7 +384,7 @@ public interface OtlpConfig extends PushRegistryConfig {
                 check("resourceAttributes", OtlpConfig::resourceAttributes),
                 check("baseTimeUnit", OtlpConfig::baseTimeUnit),
                 check("aggregationTemporality", OtlpConfig::aggregationTemporality),
-                check("compressionMode", OtlpConfig::compressionMode),
+                check("compressionMode", OtlpConfig::compressionMode), check("protocol", OtlpConfig::protocol),
                 check("histogramFlavorPerMeter", OtlpConfig::histogramFlavorPerMeter),
                 check("maxBucketsPerMeter", OtlpConfig::maxBucketsPerMeter));
     }
