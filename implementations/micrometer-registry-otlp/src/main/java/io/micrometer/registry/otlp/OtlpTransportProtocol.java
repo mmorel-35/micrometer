@@ -48,7 +48,7 @@ public enum OtlpTransportProtocol {
         if ("grpc".equalsIgnoreCase(value)) {
             return GRPC;
         }
-        if ("http/protobuf".equalsIgnoreCase(value)) {
+        if ("http/protobuf".equalsIgnoreCase(value) || "http_protobuf".equalsIgnoreCase(value)) {
             return HTTP_PROTOBUF;
         }
         throw new IllegalArgumentException(

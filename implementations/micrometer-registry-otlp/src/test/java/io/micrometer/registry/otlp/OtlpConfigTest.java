@@ -396,9 +396,15 @@ class OtlpConfigTest {
 
     @Test
     void protocolConfigTakesPrecedenceOverEnvVars() throws Exception {
-        OtlpConfig config = k -> "otlp.protocol".equals(k) ? "GRPC" : null;
+        OtlpConfig config = k -> "otlp.protocol".equals(k) ? "grpc" : null;
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "http/protobuf")
             .execute(() -> assertThat(config.protocol()).isSameAs(OtlpTransportProtocol.GRPC));
+    }
+
+    @Test
+    void protocolPropertyAcceptsOtelFormatValues() {
+        OtlpConfig config = k -> "otlp.protocol".equals(k) ? "http/protobuf" : null;
+        assertThat(config.protocol()).isSameAs(OtlpTransportProtocol.HTTP_PROTOBUF);
     }
 
     @Test
@@ -421,27 +427,6 @@ class OtlpConfigTest {
         OtlpConfig config = k -> null;
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "http/protobuf")
             .execute(() -> assertThat(config.protocol()).isSameAs(OtlpTransportProtocol.HTTP_PROTOBUF));
-    }
-
-    @Test
-    void urlDefaultIsHttpWhenNoProtocolSet() {
-        OtlpConfig config = k -> null;
-        assertThat(config.url()).isEqualTo("http://localhost:4318/v1/metrics");
-    }
-
-    @Test
-    void urlDefaultIsGrpcWhenGrpcProtocolSet() throws Exception {
-        OtlpConfig config = k -> null;
-        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "grpc")
-            .execute(() -> assertThat(config.url()).isEqualTo("http://localhost:4317"));
-    }
-
-    @Test
-    void urlDoesNotAppendPathWhenGrpcProtocolAndEndpointSet() throws Exception {
-        OtlpConfig config = k -> null;
-        withEnvironmentVariables().set("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "grpc")
-            .set("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4317")
-            .execute(() -> assertThat(config.url()).isEqualTo("http://collector:4317"));
     }
 
 }

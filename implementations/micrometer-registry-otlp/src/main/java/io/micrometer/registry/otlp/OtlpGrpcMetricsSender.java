@@ -21,6 +21,8 @@ import io.grpc.stub.MetadataUtils;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.collector.metrics.v1.MetricsServiceGrpc;
 
+import java.util.Locale;
+
 /**
  * An implementation of {@link OtlpMetricsSender} that uses gRPC (OTLP/gRPC). Preferred
  * over HTTP for in-cluster communication (lower overhead, HTTP/2 multiplexing).
@@ -57,7 +59,8 @@ public class OtlpGrpcMetricsSender implements OtlpMetricsSender {
     public void send(Request request) throws Exception {
         Metadata headers = new Metadata();
         request.getHeaders()
-            .forEach((key, value) -> headers.put(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER), value));
+            .forEach((key, value) -> headers
+                .put(Metadata.Key.of(key.toLowerCase(Locale.ROOT), Metadata.ASCII_STRING_MARSHALLER), value));
 
         MetricsServiceGrpc.MetricsServiceBlockingStub stub = this.baseStub
             .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers));

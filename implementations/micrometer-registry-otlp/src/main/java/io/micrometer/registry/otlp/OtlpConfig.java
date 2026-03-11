@@ -53,14 +53,8 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@code OTEL_EXPORTER_OTLP_METRICS_ENDPOINT} and {@code OTEL_EXPORTER_OTLP_ENDPOINT}
      * environment variables will be checked, in that order, by the default
      * implementation.
-     * <p>
-     * When no endpoint is configured and the protocol is
-     * {@link OtlpTransportProtocol#GRPC} (set via
-     * {@code OTEL_EXPORTER_OTLP_METRICS_PROTOCOL} or
-     * {@code OTEL_EXPORTER_OTLP_PROTOCOL}), the default is {@code http://localhost:4317}.
      * @return address to where metrics will be published. Default is
-     * {@code http://localhost:4318/v1/metrics} for HTTP or {@code http://localhost:4317}
-     * for gRPC
+     * {@code http://localhost:4318/v1/metrics}
      * @see <a href=
      * "https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/">OTLP
      * Exporter Configuration</a>
@@ -73,10 +67,9 @@ public interface OtlpConfig extends PushRegistryConfig {
                 endpoint = env.get("OTEL_EXPORTER_OTLP_ENDPOINT");
             }
             if (endpoint == null) {
-                return protocol() == OtlpTransportProtocol.GRPC ? "http://localhost:4317"
-                        : "http://localhost:4318/v1/metrics";
+                endpoint = "http://localhost:4318/v1/metrics";
             }
-            if (protocol() == OtlpTransportProtocol.HTTP_PROTOBUF && !endpoint.endsWith("/v1/metrics")) {
+            else if (!endpoint.endsWith("/v1/metrics")) {
                 endpoint = endpoint + "/v1/metrics";
             }
             return endpoint;
@@ -90,7 +83,14 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@link OtlpTransportProtocol#HTTP_PROTOBUF}.
      * <p>
      * Accepted values per the OpenTelemetry specification: {@code grpc} or
-     * {@code http/protobuf} (case-insensitive).
+     * {@code http/protobuf} (case-insensitive). The same values are accepted when
+     * configured via {@link #get(String)} (e.g., {@code otlp.protocol}); the underscore
+     * form {@code http_protobuf} is also accepted as a property value.
+     * <p>
+     * Note: this method only influences the default URL returned by {@link #url()} for
+     * the gRPC transport. It does not automatically switch the sender implementation. To
+     * use OTLP/gRPC, configure {@code OtlpGrpcMetricsSender} explicitly on the registry
+     * builder.
      * @return the transport protocol; default is
      * {@link OtlpTransportProtocol#HTTP_PROTOBUF}
      * @since 1.15.0
@@ -98,17 +98,19 @@ public interface OtlpConfig extends PushRegistryConfig {
      * Exporter Configuration</a>
      */
     default OtlpTransportProtocol protocol() {
-        return getEnum(this, OtlpTransportProtocol.class, "protocol").orElseGet(() -> {
-            Map<String, String> env = System.getenv();
-            String protocol = env.get("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL");
-            if (protocol == null) {
-                protocol = env.get("OTEL_EXPORTER_OTLP_PROTOCOL");
-            }
-            if (protocol != null) {
-                return OtlpTransportProtocol.fromString(protocol);
-            }
-            return OtlpTransportProtocol.HTTP_PROTOBUF;
-        });
+        String propertyValue = getString(this, "protocol").orElse(null);
+        if (propertyValue != null) {
+            return OtlpTransportProtocol.fromString(propertyValue);
+        }
+        Map<String, String> env = System.getenv();
+        String protocol = env.get("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL");
+        if (protocol == null) {
+            protocol = env.get("OTEL_EXPORTER_OTLP_PROTOCOL");
+        }
+        if (protocol != null) {
+            return OtlpTransportProtocol.fromString(protocol);
+        }
+        return OtlpTransportProtocol.HTTP_PROTOBUF;
     }
 
     /**

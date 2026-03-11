@@ -51,6 +51,9 @@ class OtlpGrpcMetricsSenderTests {
     private static final Metadata.Key<String> TEST_HEADER_KEY = Metadata.Key.of("test-header",
             Metadata.ASCII_STRING_MARSHALLER);
 
+    private static final Metadata.Key<String> GRPC_ENCODING_KEY = Metadata.Key.of("grpc-encoding",
+            Metadata.ASCII_STRING_MARSHALLER);
+
     private String serverName;
 
     private Server server;
@@ -114,7 +117,8 @@ class OtlpGrpcMetricsSenderTests {
 
         sender.send(request);
 
-        assertThat(this.testService.exportCalled.get()).isTrue();
+        assertThat(this.testService.capturedHeaders.get()).isNotNull();
+        assertThat(this.testService.capturedHeaders.get().get(GRPC_ENCODING_KEY)).isEqualTo("gzip");
     }
 
     @Test
